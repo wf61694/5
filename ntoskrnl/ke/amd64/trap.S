@@ -1087,8 +1087,44 @@ KiConvertToGuiThreadFailed:
 
 ENDFUNC
 
-KiExitToUserApc:
-    int 3
+;
+; VOID
+; KiDeliverApc(
+;     _In_ KPROCESSOR_MODE DeliveryMode,
+;     _In_ PKEXCEPTION_FRAME ExceptionFrame,
+;     _In_ PKTRAP_FRAME TrapFrame);
+;
+EXTERN KiDeliverApc:PROC
+
+PUBLIC KiInitiateUserApc
+.PROC KiInitiateUserApc
+
+    ; Generate a KEXCEPTION_FRAME on the stack
+    GENERATE_EXCEPTION_FRAME
+
+    ; Raise IRQL to APC_LEVEL
+    mov rax, APC_LEVEL
+    mov cr8, rax
+
+    ; Enable interrupts
+    sti
+
+    ; Call the C function
+    mov ecx, 1
+    mov rdx, rsp
+    lea r8, [rsp + KEXCEPTION_FRAME_LENGTH]
+    call KiDeliverApc
+
+    ; Disable interrupts again
+    cli
+
+    ; Restore the registers from the KEXCEPTION_FRAME
+    RESTORE_EXCEPTION_STATE
+
+    ; Return
+    ret
+
+.ENDP
 
 
 PUBLIC KiInitializeSegments
