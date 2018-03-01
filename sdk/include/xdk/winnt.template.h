@@ -73,6 +73,25 @@ $define(UCHAR=BYTE)
 $include(ntbasedef.h)
 $include(interlocked.h)
 $include(ketypes.h)
+
+$if(0)
+#if defined(_M_IX86)
+// $include(x86/rtl.h)
+#elif defined(_M_AMD64)
+$include(amd64/rtl.h)
+#elif defined(_M_IA64)
+$include(ia64/rtl.h)
+#elif defined(_M_PPC)
+$include(ppc/rtl.h)
+#elif defined(_M_MIPS)
+$include(mips/rtl.h)
+#elif defined(_M_ARM)
+$include(arm/rtl.h)
+#else
+#error Unknown Architecture
+#endif
+$endif
+
 $include(winnt_old.h)
 
 #ifdef __cplusplus
