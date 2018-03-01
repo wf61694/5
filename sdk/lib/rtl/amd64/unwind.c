@@ -361,6 +361,7 @@ RtlVirtualUnwind(
     ULONG i;
     UNWIND_CODE UnwindCode;
     BYTE Reg;
+    PULONG LanguageHandler;
 
     /* Use relative virtual address */
     ControlPc -= ImageBase;
@@ -374,6 +375,10 @@ RtlVirtualUnwind(
 
     /* Get a pointer to the unwind info */
     UnwindInfo = RVA(ImageBase, FunctionEntry->UnwindData);
+
+    /* The language specific handler data follows the unwind info */
+    LanguageHandler = ALIGN_UP_POINTER_BY(&UnwindInfo->UnwindCode[UnwindInfo->CountOfCodes], sizeof(ULONG));
+    *HandlerData = (LanguageHandler + 1);
 
     /* Calculate relative offset to function start */
     CodeOffset = ControlPc - FunctionEntry->BeginAddress;
@@ -488,7 +493,14 @@ RtlVirtualUnwind(
     Context->Rip = *(DWORD64*)Context->Rsp;
     Context->Rsp += sizeof(DWORD64);
 
-    return 0;
+    *EstablisherFrame = Context->Rsp;
+
+    if (UnwindInfo->Flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
+    {
+        return RVA(ImageBase, *LanguageHandler);
+    }
+
+    return NULL;
 }
 
 VOID
