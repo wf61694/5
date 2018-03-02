@@ -3,6 +3,7 @@
 #define STANDALONE
 #include <apitest.h>
 
+#ifndef _RTL_TEST
 extern void func_LdrEnumResources(void);
 extern void func_load_notifications(void);
 extern void func_NtAcceptConnectPort(void);
@@ -35,6 +36,7 @@ extern void func_NtSetValueKey(void);
 extern void func_NtSetVolumeInformationFile(void);
 extern void func_NtSystemInformation(void);
 extern void func_NtWriteFile(void);
+#endif // _RTL_TEST
 extern void func_RtlAllocateHeap(void);
 extern void func_RtlBitmap(void);
 extern void func_RtlComputePrivatizedDllName_U(void);
@@ -69,6 +71,7 @@ extern void func_TimerResolution(void);
 
 const struct test winetest_testlist[] =
 {
+#ifndef _RTL_TEST
     { "LdrEnumResources",               func_LdrEnumResources },
     { "load_notifications",             func_load_notifications },
     { "NtAcceptConnectPort",            func_NtAcceptConnectPort },
@@ -101,6 +104,7 @@ const struct test winetest_testlist[] =
     { "NtSetVolumeInformationFile",     func_NtSetVolumeInformationFile },
     { "NtSystemInformation",            func_NtSystemInformation },
     { "NtWriteFile",                    func_NtWriteFile },
+#endif // _RTL_TEST
     { "RtlAllocateHeap",                func_RtlAllocateHeap },
     { "RtlBitmapApi",                   func_RtlBitmap },
     { "RtlComputePrivatizedDllName_U",  func_RtlComputePrivatizedDllName_U },
