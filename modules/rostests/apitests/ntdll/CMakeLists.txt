@@ -40,6 +40,7 @@ list(APPEND SOURCE
 list(APPEND RTL_SOURCE
     RtlAllocateHeap.c
     RtlBitmap.c
+    RtlCaptureContext.c
     RtlComputePrivatizedDllName_U.c
     RtlCopyMappedMemory.c
     RtlDeleteAce.c
@@ -74,6 +75,9 @@ list(APPEND RTL_SOURCE
 
 if(ARCH STREQUAL "i386")
     add_asm_files(ntdll_apitest_asm i386/NtContinue.S)
+    add_asm_files(ntdll_apitest_asm i386/RtlCaptureContext.S)
+elseif(ARCH STREQUAL "amd64")
+    add_asm_files(ntdll_apitest_asm amd64/RtlCaptureContext.S)
 endif()
 
 add_rc_deps(testdata.rc ${CMAKE_CURRENT_BINARY_DIR}/load_notifications/load_notifications.dll)
