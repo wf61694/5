@@ -77,6 +77,8 @@ if(ARCH STREQUAL "i386")
     add_asm_files(ntdll_apitest_asm i386/NtContinue.S)
     add_asm_files(ntdll_apitest_asm i386/RtlCaptureContext.S)
 elseif(ARCH STREQUAL "amd64")
+    add_asm_files(ntdll_apitest_asm amd64/RtlVirtualUnwind.c)
+    add_asm_files(ntdll_apitest_asm amd64/UnwindStubs.S)
     add_asm_files(ntdll_apitest_asm amd64/RtlCaptureContext.S)
 endif()
 
