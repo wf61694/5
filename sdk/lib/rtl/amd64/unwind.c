@@ -216,13 +216,27 @@ PopReg(PCONTEXT Context, BYTE Reg)
     SetReg(Context, Reg, Value);
 }
 
+void
+FORCEINLINE
+SetXmmReg(PCONTEXT Context, BYTE Reg, M128A Value)
+{
+    ((M128A*)(&Context->Xmm0))[Reg] = Value;
+}
+
+M128A
+FORCEINLINE
+GetXmmReg(PCONTEXT Context, BYTE Reg)
+{
+    return ((M128A*)(&Context->Xmm0))[Reg];
+}
+
 /*! RtlpTryToUnwindEpilog
  * \brief Helper function that tries to unwind epilog instructions.
  * \return TRUE if we have been in an epilog and it could be unwound.
  *         FALSE if the instructions were not allowed for an epilog.
  * \ref
- *  http://msdn.microsoft.com/en-us/library/8ydc79k6(VS.80).aspx
- *  http://msdn.microsoft.com/en-us/library/tawsa7cb.aspx
+ *  https://docs.microsoft.com/en-us/cpp/build/unwind-procedure
+ *  https://docs.microsoft.com/en-us/cpp/build/prolog-and-epilog
  * \todo
  *  - Test and compare with Windows behaviour
  */
@@ -344,6 +358,51 @@ RtlpTryToUnwindEpilog(
     return TRUE;
 }
 
+/*!
+
+    \ref https://docs.microsoft.com/en-us/cpp/build/unwind-data-definitions-in-c
+*/
+static
+ULONG64
+GetEstablisherFrame(
+    _In_ PCONTEXT Context,
+    _In_ PUNWIND_INFO UnwindInfo,
+    _In_ ULONG_PTR CodeOffset)
+{
+    ULONG i;
+
+    /* Check if we have a frame register */
+    if (UnwindInfo->FrameRegister == 0)
+    {
+        /* No frame register means we use Rsp */
+        return Context->Rsp;
+    }
+
+    // FIXME
+    if (UnwindInfo->Flags & UNW_FLAG_CHAININFO)
+    {
+        __debugbreak();
+    }
+
+    /* Loop all unwind ops */
+    for (i = 0; i < UnwindInfo->CountOfCodes; i++)
+    {
+        /* Bail out, if the Unwind code is ahead of Rip */
+        if (UnwindInfo->UnwindCode[i].CodeOffset > CodeOffset)
+        {
+            break;
+        }
+
+        /* Check for SET_FPREG */
+        if (UnwindInfo->UnwindCode[i].UnwindOp == UWOP_SET_FPREG)
+        {
+            return GetReg(Context, UnwindInfo->FrameRegister) - UnwindInfo->FrameOffset * 16;
+        }
+    }
+
+    return Context->Rsp;
+}
+
 PEXCEPTION_ROUTINE
 NTAPI
 RtlVirtualUnwind(
@@ -358,7 +417,7 @@ RtlVirtualUnwind(
 {
     PUNWIND_INFO UnwindInfo;
     ULONG_PTR CodeOffset;
-    ULONG i;
+    ULONG i, Offset;
     UNWIND_CODE UnwindCode;
     BYTE Reg;
     PULONG LanguageHandler;
@@ -376,12 +435,23 @@ RtlVirtualUnwind(
     /* Get a pointer to the unwind info */
     UnwindInfo = RVA(ImageBase, FunctionEntry->UnwindData);
 
+    /* Check for chained info */
+    if (UnwindInfo->Flags & UNW_FLAG_CHAININFO)
+    {
+        __debugbreak();
+        /* See https://docs.microsoft.com/en-us/cpp/build/chained-unwind-info-structures */
+        FunctionEntry = (PRUNTIME_FUNCTION)&(UnwindInfo->UnwindCode[(UnwindInfo->CountOfCodes + 1) & ~1]);
+        UnwindInfo = RVA(ImageBase, FunctionEntry->UnwindData);
+    }
+
     /* The language specific handler data follows the unwind info */
     LanguageHandler = ALIGN_UP_POINTER_BY(&UnwindInfo->UnwindCode[UnwindInfo->CountOfCodes], sizeof(ULONG));
     *HandlerData = (LanguageHandler + 1);
 
     /* Calculate relative offset to function start */
     CodeOffset = ControlPc - FunctionEntry->BeginAddress;
+
+    *EstablisherFrame = GetEstablisherFrame(Context, UnwindInfo, CodeOffset);
 
     /* Check if we are in the function epilog and try to finish it */
     if (CodeOffset > UnwindInfo->SizeOfProlog)
@@ -438,7 +508,7 @@ RtlVirtualUnwind(
             case UWOP_ALLOC_LARGE:
                 if (UnwindCode.OpInfo)
                 {
-                    ULONG Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i+1]);
+                    Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i+1]);
                     Context->Rsp += Offset;
                     i += 3;
                 }
@@ -456,30 +526,46 @@ RtlVirtualUnwind(
                 break;
 
             case UWOP_SET_FPREG:
+                Reg = UnwindCode.OpInfo;
+                Context->Rsp = GetReg(Context, Reg) - UnwindInfo->FrameOffset * 16;
                 i++;
                 break;
 
             case UWOP_SAVE_NONVOL:
+                Reg = UnwindCode.OpInfo;
+                Offset = *(USHORT*)(&UnwindInfo->UnwindCode[i + 1]);
+                SetReg(Context, Reg, *(DWORD64*)Context->Rsp + Offset);
                 i += 2;
                 break;
 
             case UWOP_SAVE_NONVOL_FAR:
+                Reg = UnwindCode.OpInfo;
+                Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i + 1]);
+                SetReg(Context, Reg, *(DWORD64*)Context->Rsp + Offset);
                 i += 3;
                 break;
 
             case UWOP_SAVE_XMM:
+                __debugbreak();
                 i += 2;
                 break;
 
             case UWOP_SAVE_XMM_FAR:
+                __debugbreak();
                 i += 3;
                 break;
 
             case UWOP_SAVE_XMM128:
+                Reg = UnwindCode.OpInfo;
+                Offset = *(USHORT*)(&UnwindInfo->UnwindCode[i + 1]);
+                SetXmmReg(Context, Reg, *(M128A*)(Context->Rsp + Offset));
                 i += 2;
                 break;
 
             case UWOP_SAVE_XMM128_FAR:
+                Reg = UnwindCode.OpInfo;
+                Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i + 1]);
+                SetXmmReg(Context, Reg, *(M128A*)(Context->Rsp + Offset));
                 i += 3;
                 break;
 
@@ -490,11 +576,13 @@ RtlVirtualUnwind(
     }
 
     /* Unwind is finished, pop new Rip from Stack */
-    Context->Rip = *(DWORD64*)Context->Rsp;
-    Context->Rsp += sizeof(DWORD64);
+    if (Context->Rsp != 0)
+    {
+        Context->Rip = *(DWORD64*)Context->Rsp;
+        Context->Rsp += sizeof(DWORD64);
+    }
 
-    *EstablisherFrame = Context->Rsp;
-
+    /* Check if we have a handler and return it */
     if (UnwindInfo->Flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
     {
         return RVA(ImageBase, *LanguageHandler);
