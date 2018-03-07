@@ -917,10 +917,23 @@ RtlWalkFrameChain(OUT PVOID *Callers,
             DPRINT("normal funtion, new Rip = %p, new Rsp = %p\n", (PVOID)Context.Rip, (PVOID)Context.Rsp);
         }
 
-        /* Check if new Rip is valid */
-        if (!Context.Rip)
+        /* Check if we are in kernel mode */
+        if (RtlpGetMode() == KernelMode)
         {
-            break;
+            /* Check if we left the kernel range */
+            if (!(Flags & 1) && (Context.Rip < 0xFFFF800000000000ULL))
+            {
+                break;
+            }
+        }
+        else
+        {
+            /* Check if we left the user range */
+            if ((Context.Rip < 0x10000) ||
+                (Context.Rip > 0x000007FFFFFEFFFFULL))
+            {
+                break;
+            }
         }
 
         /* Check, if we have left our stack */
