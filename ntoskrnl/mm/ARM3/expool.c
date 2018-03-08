@@ -1855,7 +1855,7 @@ ExReturnPoolQuota(IN PVOID P)
  */
 PVOID
 NTAPI
-ExAllocatePoolWithTag(IN POOL_TYPE PoolType,
+ExAllocatePoolWithTagInternal(IN POOL_TYPE PoolType,
                       IN SIZE_T NumberOfBytes,
                       IN ULONG Tag)
 {
@@ -2411,6 +2411,31 @@ ExAllocatePoolWithTag(IN POOL_TYPE PoolType,
     return POOL_FREE_BLOCK(Entry);
 }
 
+#define DBG_NUMBER_OF_POOL_CALLERS 5
+PVOID
+NTAPI
+ExAllocatePoolWithTag(IN POOL_TYPE PoolType,
+                      IN SIZE_T NumberOfBytes,
+                      IN ULONG Tag)
+{
+    SIZE_T FullSize;
+    PVOID Allocation, *DbgData;
+
+    FullSize = NumberOfBytes + (DBG_NUMBER_OF_POOL_CALLERS + 2) * sizeof(PVOID);
+    Allocation = ExAllocatePoolWithTagInternal(PoolType, FullSize, Tag);
+    if (Allocation == NULL)
+    {
+        return NULL;
+    }
+
+    RtlFillMemory(Allocation, NumberOfBytes, 0x33);
+
+    DbgData = ALIGN_UP_POINTER_BY((PUCHAR)Allocation + NumberOfBytes, sizeof(PVOID));
+    DbgData[0] = (PVOID)(ULONG_PTR)'####';
+    RtlWalkFrameChain(&DbgData[1], DBG_NUMBER_OF_POOL_CALLERS, 0);
+    return Allocation;
+}
+
 /*
  * @implemented
  */
@@ -2552,6 +2577,10 @@ ExFreePoolWithTag(IN PVOID P,
             Tag &= ~PROTECTED_POOL;
         }
 
+#if DBG
+        RtlFillMemory(P, PageCount * PAGE_SIZE, 0xCC);
+#endif
+
         //
         // Check block tag
         //
@@ -2676,6 +2705,10 @@ ExFreePoolWithTag(IN PVOID P,
             ObDereferenceObject(Process);
         }
     }
+
+#if DBG
+    RtlFillMemory(P, BlockSize * POOL_BLOCK_SIZE - sizeof(*Entry), 0xCC);
+#endif
 
     //
     // Is this allocation small enough to have come from a lookaside list?
