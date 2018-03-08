@@ -825,8 +825,6 @@ EXTERN KiSystemCallHandler:PROC
 PUBLIC KiSystemCallEntry64
 .PROC KiSystemCallEntry64
 
-    /* Old stack pointer is in rcx, lie and say we saved it in rbp */
-    .setframe rbp, 0
     .endprolog
 
     /* Swap gs to kernel, so we can access the PCR */
@@ -840,14 +838,14 @@ PUBLIC KiSystemCallEntry64
 
     /* Allocate a TRAP_FRAME and space for parameters */
     sub rsp, (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE)
-#if DBG
+
     /* Save rbp and load it with the old stack pointer */
     mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_Rbp], rbp
     mov rbp, gs:[PcUserRsp]
-#endif
 
     /* Save important registers in the trap frame */
     mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_Rax], rax
+    mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_Rip], rcx
     mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_Rcx], r10
     mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_EFlags], r11
 
@@ -860,9 +858,9 @@ PUBLIC KiSystemCallEntry64
 
 .PROC KiSystemCall64Again
 
-    /* Old stack pointer is in rcx, lie and say we saved it in rbp */
-    .setframe rbp, 0
-    .endprolog
+    .PUSHFRAME
+    .ALLOCSTACK (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE - MachineFrameLength)
+    .ENDPROLOG
 
     /* Call the C-handler (will enable interrupts) */
     call KiSystemCallHandler
@@ -879,9 +877,9 @@ PUBLIC KiSystemCallEntry64
 PUBLIC KiSystemServiceExit
 .PROC KiSystemServiceExit
 
-    /* Old stack pointer is in rcx, lie and say we saved it in rbp */
-    .setframe rbp, 0
-    .endprolog
+    .PUSHFRAME
+    .ALLOCSTACK (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE - MachineFrameLength)
+    .ENDPROLOG
 
 #if DBG
     /* Restore rbp */
