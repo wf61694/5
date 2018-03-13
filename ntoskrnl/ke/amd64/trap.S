@@ -592,7 +592,7 @@ PUBLIC KiApcInterrupt
     mov cl, [rbp + KTRAP_FRAME_SegCs] // ProcessorMode
     and cl, 1
     mov rdx, 0                        // ExceptionFrame
-    mov r8, rdx                       // TrapFrame
+    mov r8, rbp                       // TrapFrame
     call KiDeliverApc
 
     /* Disable interrupts */
