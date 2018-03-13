@@ -1231,6 +1231,9 @@ co_MsqSendMessage(PTHREADINFO ptirec,
       WaitObjects[1] = pti->pEventQueueServer;     // Wait 1
       WaitObjects[2] = ptirec->pEThread;           // Wait 2
 
+      /* We need to take a reference, so it doesn't go away! */
+      ObReferenceObject(WaitObjects[2]);
+
       do
       {
          UserLeaveCo();
@@ -1280,6 +1283,8 @@ co_MsqSendMessage(PTHREADINFO ptirec,
          while (co_MsqDispatchOneSentMessage(pti))
             ;
       } while (WaitStatus == STATUS_WAIT_1);
+
+      ObDereferenceObject(WaitObjects[2]);
    }
 
    // Count is nil, restore swapping of the stack.
