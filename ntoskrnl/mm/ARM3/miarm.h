@@ -1008,6 +1008,9 @@ MI_WRITE_VALID_PDE(IN PMMPDE PointerPde,
 {
     /* Write the valid PDE */
     ASSERT(PointerPde->u.Hard.Valid == 0);
+#ifdef _M_AMD64
+    ASSERT(PointerPde->u.Hard.NoExecute == 0);
+#endif
     ASSERT(TempPde.u.Hard.Valid == 1);
     *PointerPde = TempPde;
 }
@@ -1023,6 +1026,9 @@ MI_WRITE_INVALID_PDE(IN PMMPDE PointerPde,
     /* Write the invalid PDE */
     ASSERT(InvalidPde.u.Hard.Valid == 0);
     ASSERT(InvalidPde.u.Long != 0);
+#ifdef _M_AMD64
+    ASSERT(InvalidPde.u.Soft.Protection == MM_EXECUTE_READWRITE);
+#endif
     *PointerPde = InvalidPde;
 }
 
