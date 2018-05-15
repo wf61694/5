@@ -198,6 +198,39 @@ RtlInstallFunctionTableCallback(
     return FALSE;
 }
 
+static
+__inline
+ULONG
+UnwindOpSlots(
+    _In_ UNWIND_CODE UnwindCode)
+{
+    static const UCHAR UnwindOpExtraSlotTable[] =
+    {
+        0, // UWOP_PUSH_NONVOL
+        1, // UWOP_ALLOC_LARGE (or 3, special cased in lookup code)
+        0, // UWOP_ALLOC_SMALL
+        0, // UWOP_SET_FPREG
+        1, // UWOP_SAVE_NONVOL
+        2, // UWOP_SAVE_NONVOL_FAR
+        1, // UWOP_EPILOG // previously UWOP_SAVE_XMM
+        2, // UWOP_SPARE_CODE // previously UWOP_SAVE_XMM_FAR
+        1, // UWOP_SAVE_XMM128
+        2, // UWOP_SAVE_XMM128_FAR
+        0, // UWOP_PUSH_MACHFRAME
+        2, // UWOP_SET_FPREG_LARGE
+    };
+
+    if ((UnwindCode.UnwindOp == UWOP_ALLOC_LARGE) && 
+        (UnwindCode.OpInfo != 0))
+    {
+        return 3;
+    }
+    else
+    {
+        return UnwindOpExtraSlotTable[UnwindCode.UnwindOp] + 1;
+    }    
+}
+
 inline
 void
 SetReg(
@@ -440,7 +473,7 @@ GetEstablisherFrame(
     }
 
     /* Loop all unwind ops */
-    for (i = 0; i < UnwindInfo->CountOfCodes; i++)
+    for (i = 0; i < UnwindInfo->CountOfCodes; i += UnwindOpSlots(UnwindInfo->UnwindCode[i]))
     {
         /* Bail out, if the Unwind code is ahead of Rip */
         if (UnwindInfo->UnwindCode[i].CodeOffset > CodeOffset)
@@ -520,31 +553,10 @@ RtlVirtualUnwind(
 
     /* Skip all Ops with an offset greater than the current Offset */
     i = 0;
-    while (i < UnwindInfo->CountOfCodes &&
-           CodeOffset < UnwindInfo->UnwindCode[i].CodeOffset)
+    while ((i < UnwindInfo->CountOfCodes) &&
+           (UnwindInfo->UnwindCode[i].CodeOffset > CodeOffset))
     {
-        UnwindCode = UnwindInfo->UnwindCode[i];
-        switch (UnwindCode.UnwindOp)
-        {
-            case UWOP_SAVE_NONVOL:
-            case UWOP_EPILOG:
-            case UWOP_SAVE_XMM128:
-                i += 2;
-                break;
-
-            case UWOP_SAVE_NONVOL_FAR:
-            case UWOP_SPARE_CODE:
-            case UWOP_SAVE_XMM128_FAR:
-                i += 3;
-                break;
-
-            case UWOP_ALLOC_LARGE:
-                i += UnwindCode.OpInfo ? 3 : 2;
-                break;
-
-            default:
-                i++;
-        }
+        i += UnwindOpSlots(UnwindInfo->UnwindCode[i]);
     }
 
     /* Process the remaining unwind ops */
