@@ -193,38 +193,83 @@ RtlInstallFunctionTableCallback(
     return FALSE;
 }
 
+inline
 void
-FORCEINLINE
-SetReg(PCONTEXT Context, BYTE Reg, DWORD64 Value)
+SetReg(
+    _Inout_ PCONTEXT Context,
+    _In_ BYTE Reg,
+    _In_ DWORD64 Value)
 {
     ((DWORD64*)(&Context->Rax))[Reg] = Value;
 }
 
+inline
+void
+SetRegFromStackValue(
+    _Inout_ PCONTEXT Context,
+    _Inout_opt_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+    _In_ BYTE Reg,
+    _In_ PDWORD64 ValuePointer)
+{
+    SetReg(Context, Reg, *ValuePointer);
+    if (ContextPointers != NULL)
+    {
+        ContextPointers->IntegerContext[Reg] = ValuePointer;
+    }
+}
+
+static
+__inline
 DWORD64
-FORCEINLINE
-GetReg(PCONTEXT Context, BYTE Reg)
+GetReg(
+    _Inout_ PCONTEXT Context,
+    _In_ BYTE Reg)
 {
     return ((DWORD64*)(&Context->Rax))[Reg];
 }
 
+static
+__inline
 void
-FORCEINLINE
-PopReg(PCONTEXT Context, BYTE Reg)
+PopReg(
+    _Inout_ PCONTEXT Context,
+    _Inout_opt_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+    _In_ BYTE Reg)
 {
-    DWORD64 Value = *(DWORD64*)Context->Rsp;
-    Context->Rsp += 8;
-    SetReg(Context, Reg, Value);
+    SetRegFromStackValue(Context, ContextPointers, Reg, (PDWORD64)Context->Rsp);
+    Context->Rsp += sizeof(DWORD64);
 }
 
+static
+__inline
 void
-FORCEINLINE
-SetXmmReg(PCONTEXT Context, BYTE Reg, M128A Value)
+SetXmmReg(
+    _Inout_ PCONTEXT Context,
+    _In_ BYTE Reg,
+    _In_ M128A Value)
 {
     ((M128A*)(&Context->Xmm0))[Reg] = Value;
 }
 
+static
+__inline
+void
+SetXmmRegFromStackValue(
+    _Out_ PCONTEXT Context,
+    _Inout_opt_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+    _In_ BYTE Reg,
+    _In_ M128A *ValuePointer)
+{
+    SetXmmReg(Context, Reg, *ValuePointer);
+    if (ContextPointers != NULL)
+    {
+        ContextPointers->FloatingContext[Reg] = ValuePointer;
+    }
+}
+
+static
+__inline
 M128A
-FORCEINLINE
 GetXmmReg(PCONTEXT Context, BYTE Reg)
 {
     return ((M128A*)(&Context->Xmm0))[Reg];
@@ -240,13 +285,14 @@ GetXmmReg(PCONTEXT Context, BYTE Reg)
  * \todo
  *  - Test and compare with Windows behaviour
  */
-BOOLEAN
 static
 __inline
+BOOLEAN
 RtlpTryToUnwindEpilog(
-    PCONTEXT Context,
-    ULONG64 ImageBase,
-    PRUNTIME_FUNCTION FunctionEntry)
+    _Inout_ PCONTEXT Context,
+    _Inout_opt_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+    _In_ ULONG64 ImageBase,
+    _In_ PRUNTIME_FUNCTION FunctionEntry)
 {
     CONTEXT LocalContext;
     BYTE *InstrPtr;
@@ -316,7 +362,7 @@ RtlpTryToUnwindEpilog(
         {
             /* Opcode pops a basic register from stack */
             Reg = Instr & 0x7;
-            PopReg(&LocalContext, Reg);
+            PopReg(&LocalContext, ContextPointers, Reg);
             InstrPtr++;
             continue;
         }
@@ -326,7 +372,7 @@ RtlpTryToUnwindEpilog(
         {
             /* Opcode is pop r8 .. r15 */
             Reg = ((Instr >> 8) & 0x7) + 8;
-            PopReg(&LocalContext, Reg);
+            PopReg(&LocalContext, ContextPointers, Reg);
             InstrPtr += 2;
             continue;
         }
@@ -334,6 +380,10 @@ RtlpTryToUnwindEpilog(
         /* Opcode not allowed for Epilog */
         return FALSE;
     }
+
+    // check for popfq
+
+    // also allow end with jmp imm, jmp [target], iretq
 
     /* Check if we are at the ret instruction */
     if ((DWORD64)InstrPtr != EndAddress)
@@ -413,7 +463,7 @@ RtlVirtualUnwind(
     _Inout_ PCONTEXT Context,
     _Outptr_ PVOID *HandlerData,
     _Out_ PULONG64 EstablisherFrame,
-    _Inout_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers)
+    _Inout_opt_ PKNONVOLATILE_CONTEXT_POINTERS ContextPointers)
 {
     PUNWIND_INFO UnwindInfo;
     ULONG_PTR CodeOffset;
@@ -456,7 +506,7 @@ RtlVirtualUnwind(
     /* Check if we are in the function epilog and try to finish it */
     if (CodeOffset > UnwindInfo->SizeOfProlog)
     {
-        if (RtlpTryToUnwindEpilog(Context, ImageBase, FunctionEntry))
+        if (RtlpTryToUnwindEpilog(Context, ContextPointers, ImageBase, FunctionEntry))
         {
             /* There's no exception routine */
             return NULL;
@@ -500,8 +550,7 @@ RtlVirtualUnwind(
         {
             case UWOP_PUSH_NONVOL:
                 Reg = UnwindCode.OpInfo;
-                SetReg(Context, Reg, *(DWORD64*)Context->Rsp);
-                Context->Rsp += sizeof(DWORD64);
+                PopReg(Context, ContextPointers, Reg);
                 i++;
                 break;
 
@@ -534,14 +583,14 @@ RtlVirtualUnwind(
             case UWOP_SAVE_NONVOL:
                 Reg = UnwindCode.OpInfo;
                 Offset = *(USHORT*)(&UnwindInfo->UnwindCode[i + 1]);
-                SetReg(Context, Reg, *(DWORD64*)Context->Rsp + Offset);
+                SetRegFromStackValue(Context, ContextPointers, Reg, (DWORD64*)Context->Rsp + Offset);
                 i += 2;
                 break;
 
             case UWOP_SAVE_NONVOL_FAR:
                 Reg = UnwindCode.OpInfo;
                 Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i + 1]);
-                SetReg(Context, Reg, *(DWORD64*)Context->Rsp + Offset);
+                SetRegFromStackValue(Context, ContextPointers, Reg, (DWORD64*)Context->Rsp + Offset);
                 i += 3;
                 break;
 
@@ -558,18 +607,19 @@ RtlVirtualUnwind(
             case UWOP_SAVE_XMM128:
                 Reg = UnwindCode.OpInfo;
                 Offset = *(USHORT*)(&UnwindInfo->UnwindCode[i + 1]);
-                SetXmmReg(Context, Reg, *(M128A*)(Context->Rsp + Offset));
+                SetXmmRegFromStackValue(Context, ContextPointers, Reg, (M128A*)(Context->Rsp + Offset));
                 i += 2;
                 break;
 
             case UWOP_SAVE_XMM128_FAR:
                 Reg = UnwindCode.OpInfo;
                 Offset = *(ULONG*)(&UnwindInfo->UnwindCode[i + 1]);
-                SetXmmReg(Context, Reg, *(M128A*)(Context->Rsp + Offset));
+                SetXmmRegFromStackValue(Context, ContextPointers, Reg, (M128A*)(Context->Rsp + Offset));
                 i += 3;
                 break;
 
             case UWOP_PUSH_MACHFRAME:
+                __debugbreak();
                 i += 1;
                 break;
         }
