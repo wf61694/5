@@ -580,7 +580,7 @@ RtlVirtualUnwind(
                 }
                 else
                 {
-                    USHORT Offset = UnwindInfo->UnwindCode[i+1].FrameOffset;
+                    Offset = UnwindInfo->UnwindCode[i+1].FrameOffset;
                     Context->Rsp += Offset * 8;
                     i += 2;
                 }
@@ -635,9 +635,11 @@ RtlVirtualUnwind(
                 break;
 
             case UWOP_PUSH_MACHFRAME:
-                __debugbreak();
-                i += 1;
-                break;
+                Offset = UnwindCode.OpInfo * sizeof(DWORD64);
+                Context->Rip = *(PDWORD64)(Context->Rsp + Offset);
+                Context->Rsp = *(PDWORD64)(Context->Rsp + Offset + 24);
+                ASSERT((i + 1) == UnwindInfo->CountOfCodes);
+                goto Exit;
         }
     }
 
@@ -647,6 +649,8 @@ RtlVirtualUnwind(
         Context->Rip = *(DWORD64*)Context->Rsp;
         Context->Rsp += sizeof(DWORD64);
     }
+
+Exit:
 
     /* Check if we have a handler and return it */
     if (UnwindInfo->Flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
