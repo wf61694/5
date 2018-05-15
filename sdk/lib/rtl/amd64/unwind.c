@@ -22,8 +22,13 @@
 #define UWOP_SET_FPREG 3
 #define UWOP_SAVE_NONVOL 4
 #define UWOP_SAVE_NONVOL_FAR 5
+#if 0 // These are deprecated / not for x64
 #define UWOP_SAVE_XMM 6
 #define UWOP_SAVE_XMM_FAR 7
+#else
+#define UWOP_EPILOG 6
+#define UWOP_SPARE_CODE 7
+#endif
 #define UWOP_SAVE_XMM128 8
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME 10
@@ -522,13 +527,13 @@ RtlVirtualUnwind(
         switch (UnwindCode.UnwindOp)
         {
             case UWOP_SAVE_NONVOL:
-            case UWOP_SAVE_XMM:
+            case UWOP_EPILOG:
             case UWOP_SAVE_XMM128:
                 i += 2;
                 break;
 
             case UWOP_SAVE_NONVOL_FAR:
-            case UWOP_SAVE_XMM_FAR:
+            case UWOP_SPARE_CODE:
             case UWOP_SAVE_XMM128_FAR:
                 i += 3;
                 break;
@@ -594,14 +599,13 @@ RtlVirtualUnwind(
                 i += 3;
                 break;
 
-            case UWOP_SAVE_XMM:
-                __debugbreak();
-                i += 2;
+            case UWOP_EPILOG:
+                i += 1;
                 break;
 
-            case UWOP_SAVE_XMM_FAR:
+            case UWOP_SPARE_CODE:
                 __debugbreak();
-                i += 3;
+                i += 2;
                 break;
 
             case UWOP_SAVE_XMM128:
@@ -1050,7 +1054,7 @@ RtlCaptureNonVolatileContextPointers(
     {
         /* Look up the function entry */
         FunctionEntry = RtlLookupFunctionEntry(Context.Rip, &ImageBase, NULL);
-        ASSERT(FunctionEntry == NULL);
+        ASSERT(FunctionEntry != NULL);
 
         /* Do a virtual unwind to the caller */
         RtlVirtualUnwind(UNW_FLAG_EHANDLER,
