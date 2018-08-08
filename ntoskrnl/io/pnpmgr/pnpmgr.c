@@ -964,6 +964,7 @@ IopStartDevice(
     if (!NT_SUCCESS(Status))
         goto ByeBye;
 
+   //if (DeviceNode->ServiceName.Buffer == NULL) __debugbreak();
    RtlInitUnicodeString(&KeyName, L"ActiveService");
    ValueString = DeviceNode->ServiceName;
    if (!ValueString.Buffer)
@@ -1440,7 +1441,7 @@ IopSynchronousCall(IN PDEVICE_OBJECT DeviceObject,
     Irp->IoStatus.Status = IoStatusBlock.Status = STATUS_NOT_SUPPORTED;
     Irp->IoStatus.Information = IoStatusBlock.Information = 0;
 
-    /* Special case for IRP_MN_FILTER_RESOURCE_REQUIREMENTS */
+    /* Special case for IRP_MN_FILTER_RESOURCE_REQUIREMENTS */ // FIXME! need to check major first!
     if (IoStackLocation->MinorFunction == IRP_MN_FILTER_RESOURCE_REQUIREMENTS)
     {
         /* Copy the resource requirements list into the IOSB */
@@ -1462,7 +1463,7 @@ IopSynchronousCall(IN PDEVICE_OBJECT DeviceObject,
     /* Copy-in the stack */
     IrpStack = IoGetNextIrpStackLocation(Irp);
     *IrpStack = *IoStackLocation;
-
+    DPRINT1("### Irp=%p, Irp->UserEvent=%p, IrpStack=%p\n", Irp, Irp->UserEvent, IrpStack);
     /* Call the driver */
     Status = IoCallDriver(TopDeviceObject, Irp);
     if (Status == STATUS_PENDING)
@@ -1474,6 +1475,10 @@ IopSynchronousCall(IN PDEVICE_OBJECT DeviceObject,
                               FALSE,
                               NULL);
         Status = IoStatusBlock.Status;
+    }
+    else
+    {
+        if (Irp->Tail.Apc.Inserted) __debugbreak();
     }
 
     /* Remove the reference */
