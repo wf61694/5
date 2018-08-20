@@ -5565,14 +5565,14 @@ typedef MONITORINFOEXW MONITORINFOEX, *LPMONITORINFOEX;
 #define wsprintf wsprintfW
 #define wvsprintf wvsprintfW
 
-#ifndef NOGDI
+#if defined(_WINGDI_) && !defined(NOGDI)
 #define ChangeDisplaySettings ChangeDisplaySettingsW
 #define ChangeDisplaySettingsEx ChangeDisplaySettingsExW
 #define CreateDesktop CreateDesktopW
 #define EnumDisplaySettings EnumDisplaySettingsW
 #define EnumDisplaySettingsEx EnumDisplaySettingsExW
 #define EnumDisplayDevices EnumDisplayDevicesW
-#endif /* NOGDI */
+#endif /* _WINGDI_ && !NOGDI */
 #else /* UNICODE */
 #define EDITWORDBREAKPROC EDITWORDBREAKPROCA
 #define PROPENUMPROC PROPENUMPROCA
@@ -5737,7 +5737,7 @@ typedef MONITORINFOEXA MONITORINFOEX, *LPMONITORINFOEX;
 #define EnumDisplaySettings EnumDisplaySettingsA
 #define EnumDisplaySettingsEx EnumDisplaySettingsExA
 #define EnumDisplayDevices EnumDisplayDevicesA
-#endif /* NOGDI */
+#endif /* _WINGDI_ && !NOGDI */
 #endif /* UNICODE */
 #endif /* RC_INVOKED */
 
