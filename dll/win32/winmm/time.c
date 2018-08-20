@@ -234,7 +234,7 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
 
     while (! TIME_TimeToDie)
     {
-	sleep_time = TIME_MMSysTimeCallback();
+        sleep_time = TIME_MMSysTimeCallback();
 
         if (sleep_time == 0)
             continue;
@@ -259,7 +259,7 @@ void	TIME_MMTimeStart(void)
 	TIME_TimersList = NULL;
         TIME_hWakeEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         TIME_TimeToDie = FALSE;
-	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, NULL, 0, NULL);
+        TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, NULL, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
     }
 }
