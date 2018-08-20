@@ -645,7 +645,7 @@ static const char* debuglvitem_t(const LVITEMW *lpLVItem, BOOL isW)
     if (len == -1) goto end;
     buf += len; size -= len;
     if (lpLVItem->mask & LVIF_PARAM)
-	len = snprintf(buf, size, "lParam=%lx, ", lpLVItem->lParam);
+	len = snprintf(buf, size, "lParam=%zx, ", lpLVItem->lParam);
     else len = 0;
     if (len == -1) goto end;
     buf += len; size -= len;

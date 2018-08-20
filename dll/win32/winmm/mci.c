@@ -1728,7 +1728,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
     if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
     if (lpParms->lpstrReturn == NULL)		return MCIERR_PARAM_OVERFLOW;
 
-    TRACE("(%08x, %08X, %p[num=%d, wDevTyp=%u])\n",
+    TRACE("(%08x, %08lX, %08lX[num=%ld, wDevTyp=%u])\n",
 	  uDevID, dwFlags, lpParms, lpParms->dwNumber, lpParms->wDeviceType);
     if ((WORD)MCI_ALL_DEVICE_ID == LOWORD(uDevID))
 	uDevID = MCI_ALL_DEVICE_ID; /* Be compatible with Win9x */
