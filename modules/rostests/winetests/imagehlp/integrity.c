@@ -321,7 +321,7 @@ static void test_pe_checksum(void)
 
     SetLastError(0xdeadbeef);
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile((void *)0xdeadbeef, 0, &checksum_orig, &checksum_new);
+    ret = pCheckSumMappedFile((void *)(ULONG_PTR)0xdeadbeefdeadbeef, 0, &checksum_orig, &checksum_new);
     ok(!ret, "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected err=0xdeadbeef, got %x\n", GetLastError());
     ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
@@ -332,7 +332,7 @@ static void test_pe_checksum(void)
         /* crashes on Windows */
         checksum_orig = checksum_new = 0xdeadbeef;
         pCheckSumMappedFile(0, 0x1000, &checksum_orig, &checksum_new);
-        pCheckSumMappedFile((void *)0xdeadbeef, 0x1000, NULL, NULL);
+        pCheckSumMappedFile((void *)(ULONG_PTR)0xdeadbeefdeadbeef, 0x1000, NULL, NULL);
     }
 
     /* basic checksum tests */
