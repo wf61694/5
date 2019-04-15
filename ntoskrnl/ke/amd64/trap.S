@@ -756,8 +756,10 @@ EXTERN KiSystemCallHandler:PROC
  *--*/
 PUBLIC KiSystemCallEntry64
 .PROC KiSystemCallEntry64
-
-    .endprolog
+    /* The unwind info pretends we have a machine frame */
+    .PUSHFRAME
+    .ALLOCSTACK (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE - MachineFrameLength)
+    .ENDPROLOG
 
     /* Swap gs to kernel, so we can access the PCR */
     swapgs
@@ -773,6 +775,7 @@ PUBLIC KiSystemCallEntry64
 
     /* Save rbp and load it with the old stack pointer */
     mov [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_Rbp], rbp
+
     mov rbp, gs:[PcUserRsp]
 
     /* Save important registers in the trap frame */
@@ -786,13 +789,7 @@ PUBLIC KiSystemCallEntry64
     mov ds, ax
     mov es, ax
 
-.ENDP
-
-.PROC KiSystemCall64Again
-
-    .PUSHFRAME
-    .ALLOCSTACK (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE - MachineFrameLength)
-    .ENDPROLOG
+KiSystemCall64Again LABEL PROC
 
     /* Call the C-handler (will enable interrupts) */
     call KiSystemCallHandler
@@ -804,14 +801,8 @@ PUBLIC KiSystemCallEntry64
     mov r9, [rsp + MAX_SYSCALL_PARAM_SIZE + KTRAP_FRAME_R9]
     call rax
 
-.ENDP
-
 PUBLIC KiSystemServiceExit
-.PROC KiSystemServiceExit
-
-    .PUSHFRAME
-    .ALLOCSTACK (KTRAP_FRAME_LENGTH + MAX_SYSCALL_PARAM_SIZE - MachineFrameLength)
-    .ENDPROLOG
+KiSystemServiceExit LABEL PROC
 
 #if DBG
     /* Restore rbp */
