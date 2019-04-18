@@ -100,7 +100,6 @@ KiDispatchExceptionToUser(
     IN PEXCEPTION_RECORD ExceptionRecord)
 {
     EXCEPTION_RECORD LocalExceptRecord;
-    ULONG Size;
     ULONG64 UserRsp;
     PCONTEXT UserContext;
     PEXCEPTION_RECORD UserExceptionRecord;
@@ -115,12 +114,8 @@ KiDispatchExceptionToUser(
         ExceptionRecord = &LocalExceptRecord;
     }
 
-    /* Calculate the size of the exception record */
-    Size = FIELD_OFFSET(EXCEPTION_RECORD, ExceptionInformation) +
-           ExceptionRecord->NumberParameters * sizeof(ULONG64);
-
     /* Get new stack pointer and align it to 16 bytes */
-    UserRsp = (Context->Rsp - Size - sizeof(CONTEXT)) & ~15;
+    UserRsp = (Context->Rsp - sizeof(CONTEXT) - sizeof(EXCEPTION_RECORD)) & ~15;
 
     /* Get pointers to the usermode context and exception record */
     UserContext = (PVOID)UserRsp;
@@ -134,7 +129,7 @@ KiDispatchExceptionToUser(
         *UserContext = *Context;
 
         /* Probe stack and copy exception record */
-        ProbeForWrite(UserExceptionRecord, Size, sizeof(ULONG64));
+        ProbeForWrite(UserExceptionRecord, sizeof(EXCEPTION_RECORD), sizeof(ULONG64));
         *UserExceptionRecord = *ExceptionRecord;
     }
     _SEH2_EXCEPT((LocalExceptRecord = *_SEH2_GetExceptionInformation()->ExceptionRecord),
@@ -346,8 +341,8 @@ KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord,
 
             /* Forward exception to user mode debugger */
             if (DbgkForwardException(ExceptionRecord, TRUE, FALSE)) return;
-
-            //KiDispatchExceptionToUser()
+            __debugbreak();
+            KiDispatchExceptionToUser(TrapFrame, &Context, ExceptionRecord);
             __debugbreak();
         }
 

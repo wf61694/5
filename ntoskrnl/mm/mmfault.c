@@ -220,7 +220,7 @@ MmAccessFault(IN ULONG FaultCode,
         }
 #endif
     }
-
+    if ((ULONG_PTR)Address == 0x000007ffb75181f9) __debugbreak();
     /* Handle shared user page, which doesn't have a VAD / MemoryArea */
     if (PAGE_ALIGN(Address) == (PVOID)MM_SHARED_USER_DATA_VA)
     {

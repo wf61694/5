@@ -108,11 +108,116 @@ StatusRaise:
 
 .ENDP
 
+/*
+    BOOLEAN
+    NTAPI
+    RtlDispatchException(
+        _In_ PEXCEPTION_RECORD ExceptionRecord,
+        _In_ PCONTEXT ContextRecord);
+ */
+EXTERN RtlDispatchException:PROC
+
+/*
+    NTSTATUS
+    NTAPI
+    ZwContinue(
+        _In_ PCONTEXT Context,
+        _In_ BOOLEAN TestAlert);
+ */
+EXTERN ZwContinue:PROC
+
+/*
+    NTSTATUS
+    NTAPI
+    ZwRaiseException(
+        _In_ PEXCEPTION_RECORD ExceptionRecord,
+        _In_ PCONTEXT Context,
+        _In_ BOOLEAN SearchFrames);
+ */
+EXTERN ZwRaiseException:PROC
+
+/*
+    VOID
+    NTAPI
+    RtlRaiseStatus(
+        _In_ PEXCEPTION_RECORD ExceptionRecord);
+ */
+EXTERN RtlRaiseException:PROC
+
+/*
+    VOID
+    KiUserExceptionDispatcher(
+        CONTEXT ContextRecord<rcx>,
+        PEXCEPTION_RECORD ExceptionRecord<rdx>);
+
+    This function is called with the following stack layout:
+        CONTEXT ContextRecord <- RSP
+        PEXCEPTION_RECORD ExceptionRecord
+ */
 PUBLIC KiUserExceptionDispatcher
 .PROC KiUserExceptionDispatcher
-    .endprolog
-    int 3
+    .ENDPROLOG
 
+    /* Clear direction flag */
+    cld
+    int 3
+    /* Dispatch the exception */
+    call RtlDispatchException
+
+    /* Check for success */
+    or al, al
+    jz RaiseException
+
+    /* We're fine, continue execution */
+    lea rcx, [rsp] ; ContextRecord
+    mov dl, 0 ; TestAlert
+    call ZwContinue
+
+    /* Exit */
+    jmp Exit
+
+RaiseException:
+
+    /* Raise the exception */
+    lea rcx, [rsp + CONTEXT_FRAME_LENGTH] ; ExceptionRecord
+    lea rdx, [rsp] ; ContextRecord
+    xor r8, r8
+    call ZwRaiseException
+
+Exit:
+    lea rcx, [rsp + CONTEXT_FRAME_LENGTH] ; ExceptionRecord
+    mov rdx, rax
+    call KiUserExceptionDispatcherNested
+    ret
+
+.ENDP
+
+/*
+    VOID
+    KiUserExceptionDispatcherNested(
+        _In_ ExceptionRecord<rcx>,
+        _In_ Status<edx>
+    )
+ */
+.PROC KiUserExceptionDispatcherNested
+    /* Allocate space for the nested exception record */
+    sub rsp, EXCEPTION_RECORD_LENGTH
+    .ALLOCSTACK EXCEPTION_RECORD_LENGTH
+    .ENDPROLOG
+
+    /* Set it up */
+    mov dword ptr [rsp + ErNumberParameters], 0
+    mov dword ptr [rsp + ErExceptionFlags], EXCEPTION_NONCONTINUABLE
+    mov [rsp + ErExceptionRecord], rcx
+    mov [rsp + ErExceptionCode], edx
+ 
+    /* Raise the exception */
+    mov rcx, rsp
+    call RtlRaiseException
+
+    /* Cleanup stack and return */
+    add rsp, EXCEPTION_RECORD_LENGTH
+    ret
 .ENDP
 
 ; This is the global memory address we apply the hardware breakpoint on.
