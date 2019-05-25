@@ -640,7 +640,7 @@ static WCHAR *build_request_string( request_t *request )
 out:
     if (path != request->path)
         heap_free( path );
-    heap_free( headers );
+    heap_free( (void*)headers );
     return ret;
 }
 
@@ -1434,7 +1434,7 @@ static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
 
     req[n] = NULL;
     requestString = concatenate_string_list( req, 4 );
-    heap_free( req );
+    heap_free( (void*)req );
     if (!requestString) return NULL;
 
     /*

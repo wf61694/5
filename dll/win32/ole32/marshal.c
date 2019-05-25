@@ -2205,7 +2205,7 @@ static const IClassFactoryVtbl *StdMarshalCF = &StdMarshalCFVtbl;
 
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv)
 {
-    *ppv = &StdMarshalCF;
+    *ppv = (PVOID)&StdMarshalCF;
     return S_OK;
 }
 

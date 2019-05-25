@@ -1087,7 +1087,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 	}
     }
     if (IsEqualCLSID(rclsid, &CLSID_PSDispatch) && IsEqualIID(iid, &IID_IPSFactoryBuffer)) {
-        *ppv = &pPSDispatchFacBuf;
+        *ppv = (PVOID)&pPSDispatchFacBuf;
         IPSFactoryBuffer_AddRef((IPSFactoryBuffer *)*ppv);
         return S_OK;
     }
