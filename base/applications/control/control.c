@@ -46,12 +46,12 @@ OpenShellFolder(LPWSTR lpFolderCLSID)
     StringCbCopy(szParameters, sizeof(szParameters), L"/n,::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{21EC2020-3AEA-1069-A2DD-08002B30309D}");
     StringCbCat(szParameters,sizeof(szParameters), lpFolderCLSID);
 
-    return (INT_PTR)ShellExecuteW(NULL,
-                                  L"open",
-                                  L"explorer.exe",
-                                  szParameters,
-                                  NULL,
-                                  SW_SHOWDEFAULT) > 32;
+    return (INT)((INT_PTR)ShellExecuteW(NULL,
+                                        L"open",
+                                        L"explorer.exe",
+                                        szParameters,
+                                        NULL,
+                                        SW_SHOWDEFAULT) > 32);
 }
 
 static INT

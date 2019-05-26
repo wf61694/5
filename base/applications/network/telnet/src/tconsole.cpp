@@ -927,7 +927,7 @@ void TConsole::Beep() {
 }
 
 void TConsole::SetCursorSize(int pct) {
-	CONSOLE_CURSOR_INFO ci = {(pct != 0)?pct:1, pct != 0};
+	CONSOLE_CURSOR_INFO ci = {(pct != 0)?pct:1u, pct != 0};
 	SetConsoleCursorInfo(hConsole, &ci);
 }
 

@@ -37,9 +37,9 @@ ObReferenceObjectSafe(IN PVOID Object)
     do
     {
         /* Increase the reference count */
-        NewValue = InterlockedCompareExchangeSizeT(&ObjectHeader->PointerCount,
-                                                   OldValue + 1,
-                                                   OldValue);
+        NewValue = InterlockedCompareExchangeLongPtr(&ObjectHeader->PointerCount,
+                                                     OldValue + 1,
+                                                     OldValue);
         if (OldValue == NewValue) return TRUE;
 
         /* Keep looping */
