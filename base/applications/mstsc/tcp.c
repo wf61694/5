@@ -110,7 +110,7 @@ RD_BOOL send_ssl_chunk(const void *msg, size_t size)
 {
 	SecBuffer bufs[4] = {
 		{g_ssl->ssl_sizes.cbHeader, SECBUFFER_STREAM_HEADER, g_ssl->ssl_buf},
-		{size,  SECBUFFER_DATA, g_ssl->ssl_buf+g_ssl->ssl_sizes.cbHeader},
+		{(ULONG)size,  SECBUFFER_DATA, g_ssl->ssl_buf+g_ssl->ssl_sizes.cbHeader},
 		{g_ssl->ssl_sizes.cbTrailer, SECBUFFER_STREAM_TRAILER, g_ssl->ssl_buf+g_ssl->ssl_sizes.cbHeader+size},
 		{0, SECBUFFER_EMPTY, NULL}
 	};

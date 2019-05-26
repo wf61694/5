@@ -1228,7 +1228,7 @@ public:
         {
         case REG_SZ:
         case REG_EXPAND_SZ:
-            length = (_tcslen(pszValue) + 1) * sizeof(TCHAR);
+            length = (ULONG)(_tcslen(pszValue) + 1) * sizeof(TCHAR);
             return SetValue(pszValueName, dwType, pszValue, length);
         case REG_MULTI_SZ:
             return SetMultiStringValue(pszValueName, pszValue);
@@ -1370,7 +1370,7 @@ protected:
         int count = 0;
         do
         {
-            int len = _tcslen(pszz);
+            int len = (int)_tcslen(pszz);
             count += len + 1;
             pszz += len + 1;
         } while (*pszz != TEXT('\0'));

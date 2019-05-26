@@ -199,7 +199,7 @@ static char *ncalrpc_pipe_name(const char *endpoint)
 
   /* protseq=ncalrpc: supposed to use NT LPC ports,
    * but we'll implement it with named pipes for now */
-  pipe_name = I_RpcAllocate(sizeof(prefix) + strlen(endpoint));
+  pipe_name = I_RpcAllocate(sizeof(prefix) + (ULONG)strlen(endpoint));
   strcat(strcpy(pipe_name, prefix), endpoint);
   return pipe_name;
 }
@@ -559,7 +559,7 @@ static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
 
     smb_floor->count_lhs = sizeof(smb_floor->protid);
     smb_floor->protid = EPM_PROTOCOL_SMB;
-    smb_floor->count_rhs = endpoint_size;
+    smb_floor->count_rhs = (ULONG)endpoint_size;
 
     if (endpoint)
         memcpy(tower_data, endpoint, endpoint_size);
@@ -573,7 +573,7 @@ static size_t rpcrt4_ncacn_np_get_top_of_tower(unsigned char *tower_data,
 
     nb_floor->count_lhs = sizeof(nb_floor->protid);
     nb_floor->protid = EPM_PROTOCOL_NETBIOS;
-    nb_floor->count_rhs = networkaddr_size;
+    nb_floor->count_rhs = (ULONG)networkaddr_size;
 
     if (networkaddr)
         memcpy(tower_data, networkaddr, networkaddr_size);
@@ -858,7 +858,7 @@ static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
 
     pipe_floor->count_lhs = sizeof(pipe_floor->protid);
     pipe_floor->protid = EPM_PROTOCOL_PIPE;
-    pipe_floor->count_rhs = endpoint_size;
+    pipe_floor->count_rhs = (USHORT)endpoint_size;
 
     memcpy(tower_data, endpoint, endpoint_size);
 
@@ -1233,7 +1233,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     {
       char host[256];
       char service[256];
-      getnameinfo(ai_cur->ai_addr, ai_cur->ai_addrlen,
+      getnameinfo(ai_cur->ai_addr, (socklen_t)ai_cur->ai_addrlen,
         host, sizeof(host), service, sizeof(service),
         NI_NUMERICHOST | NI_NUMERICSERV);
       TRACE("trying %s:%s\n", host, service);
@@ -1246,7 +1246,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
       continue;
     }
 
-    if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
+    if (0>connect(sock, ai_cur->ai_addr, (int)ai_cur->ai_addrlen))
     {
       WARN("connect() failed: %u\n", WSAGetLastError());
       closesocket(sock);
@@ -1319,7 +1319,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (TRACE_ON(rpc))
         {
             char host[256];
-            getnameinfo(ai_cur->ai_addr, ai_cur->ai_addrlen,
+            getnameinfo(ai_cur->ai_addr, (socklen_t)ai_cur->ai_addrlen,
                         host, sizeof(host), service, sizeof(service),
                         NI_NUMERICHOST | NI_NUMERICSERV);
             TRACE("trying %s:%s\n", host, service);
@@ -1333,7 +1333,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
             continue;
         }
 
-        ret = bind(sock, ai_cur->ai_addr, ai_cur->ai_addrlen);
+        ret = bind(sock, ai_cur->ai_addr, (int)ai_cur->ai_addrlen);
         if (ret < 0)
         {
             WARN("bind failed: %u\n", WSAGetLastError());
@@ -2040,7 +2040,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
             HeapFree(GetProcessHeap(), 0, proxy);
             return RPC_S_OUT_OF_RESOURCES;
         }
-        MultiByteToWideChar(CP_ACP, 0, httpc->common.NetworkAddr, -1, servername, strlen(httpc->common.NetworkAddr) + 1);
+        MultiByteToWideChar(CP_ACP, 0, httpc->common.NetworkAddr, -1, servername, (int)strlen(httpc->common.NetworkAddr) + 1);
     }
 
     port = (httpc->common.QOS &&
@@ -2538,7 +2538,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
 
         if (creds->AuthnSchemes[0] == RPC_C_HTTP_AUTHN_SCHEME_NTLM) scheme = ntlmW;
         else scheme = negotiateW;
-        scheme_len = strlenW( scheme );
+        scheme_len = (int)strlenW( scheme );
 
         if (!*auth_ptr)
         {
@@ -2575,7 +2575,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
         p = auth_value + scheme_len;
         if (!first && *p == ' ')
         {
-            int len = strlenW(++p);
+            int len = (int)strlenW(++p);
             in.cbBuffer = decode_base64(p, len, NULL);
             if (!(in.pvBuffer = HeapAlloc(GetProcessHeap(), 0, in.cbBuffer))) break;
             decode_base64(p, len, in.pvBuffer);
@@ -2842,9 +2842,9 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         return RPC_S_OUT_OF_MEMORY;
     memcpy(url, wszRpcProxyPrefix, sizeof(wszRpcProxyPrefix));
     MultiByteToWideChar(CP_ACP, 0, Connection->NetworkAddr, -1, url+ARRAY_SIZE(wszRpcProxyPrefix)-1,
-                        strlen(Connection->NetworkAddr)+1);
+                        (DWORD)strlen(Connection->NetworkAddr)+1);
     strcatW(url, wszColon);
-    MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+strlenW(url), strlen(Connection->Endpoint)+1);
+    MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+strlenW(url), (DWORD)strlen(Connection->Endpoint)+1);
 
     secure = is_secure(httpc);
     credentials = has_credentials(httpc);
@@ -3584,7 +3584,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
 
     if ((status == RPC_S_OK) && protseq)
     {
-        *protseq = I_RpcAllocate(strlen(protseq_ops->name) + 1);
+        *protseq = I_RpcAllocate((ULONG)strlen(protseq_ops->name) + 1);
         strcpy(*protseq, protseq_ops->name);
     }
 
@@ -3686,7 +3686,7 @@ RPC_STATUS WINAPI RpcNetworkInqProtseqsW( RPC_PROTSEQ_VECTORW** protseqs )
     if (pvector->Protseq[i] == NULL)
       goto end;
     MultiByteToWideChar(CP_ACP, 0, (CHAR*)protseq_list[i].name, -1,
-      (WCHAR*)pvector->Protseq[i], strlen(protseq_list[i].name) + 1);
+      (WCHAR*)pvector->Protseq[i], (int)strlen(protseq_list[i].name) + 1);
     pvector->Count++;
   }
   status = RPC_S_OK;

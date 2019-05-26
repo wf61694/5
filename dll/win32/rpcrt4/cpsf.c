@@ -266,7 +266,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
       if (RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key) == ERROR_SUCCESS) {
         WCHAR num[10];
         if (name)
-          RegSetValueExA(key, NULL, 0, REG_SZ, (const BYTE *)name, strlen(name)+1);
+          RegSetValueExA(key, NULL, 0, REG_SZ, (const BYTE *)name, (ULONG)strlen(name)+1);
         RegSetValueW( key, clsid32W, REG_SZ, clsid, 0 );
         sprintfW(num, numformatW, proxy->header.DispatchTableCount);
         RegSetValueW( key, nummethodsW, REG_SZ, num, 0 );
@@ -285,7 +285,7 @@ HRESULT WINAPI NdrDllRegisterProxy(HMODULE hDll,
       if (RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key) == ERROR_SUCCESS) {
           RegSetValueExW(key, NULL, 0, REG_SZ, (const BYTE *)psfactoryW, sizeof(psfactoryW));
           if (RegCreateKeyW(key, inprocserverW, &subkey) == ERROR_SUCCESS) {
-              RegSetValueExW(subkey, NULL, 0, REG_SZ, (LPBYTE)module, (strlenW(module)+1)*sizeof(WCHAR));
+              RegSetValueExW(subkey, NULL, 0, REG_SZ, (LPBYTE)module, (ULONG)(strlenW(module)+1)*sizeof(WCHAR));
               RegSetValueExW(subkey, threadingmodelW, 0, REG_SZ, (const BYTE *)bothW, sizeof(bothW));
               RegCloseKey(subkey);
           }

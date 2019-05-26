@@ -681,7 +681,7 @@ static NTSTATUS write_roots(HANDLE h, LIST_ENTRY* roots, UINT32 node_size, BTRFS
                 dp -= item->size;
                 memcpy(dp, item->data, item->size);
 
-                ln->offset = dp - tree - sizeof(tree_header);
+                ln->offset = (UINT32)(dp - tree - sizeof(tree_header));
             } else
                 ln->offset = 0;
 
@@ -1347,7 +1347,7 @@ static BOOL is_mounted_multi_device(HANDLE h, UINT32 sector_size) {
     RtlFreeHeap(RtlGetProcessHeap(), 0, sb);
 #endif
 
-    us.Length = us.MaximumLength = wcslen(btrfs) * sizeof(WCHAR);
+    us.Length = us.MaximumLength = (USHORT)(wcslen(btrfs) * sizeof(WCHAR));
     us.Buffer = btrfs;
 
     InitializeObjectAttributes(&atts, &us, 0, NULL, NULL);
@@ -1561,7 +1561,7 @@ end:
 
     if (NT_SUCCESS(Status)) {
         btrfsus.Buffer = btrfs;
-        btrfsus.Length = btrfsus.MaximumLength = wcslen(btrfs) * sizeof(WCHAR);
+        btrfsus.Length = btrfsus.MaximumLength = (USHORT)(wcslen(btrfs) * sizeof(WCHAR));
 
         InitializeObjectAttributes(&attr, &btrfsus, 0, NULL, NULL);
 
@@ -1572,7 +1572,7 @@ end:
             MOUNTDEV_NAME* mdn;
             ULONG mdnsize;
 
-            mdnsize = offsetof(MOUNTDEV_NAME, Name[0]) + DriveRoot->Length;
+            mdnsize = (ULONG)offsetof(MOUNTDEV_NAME, Name[0]) + DriveRoot->Length;
 #ifndef __REACTOS__
             mdn = malloc(mdnsize);
 #else
@@ -1611,11 +1611,11 @@ BOOL __stdcall FormatEx(DSTRING* root, STREAM_MESSAGE* message, options* opts, U
     if (!root || !root->string)
         return FALSE;
 
-    DriveRoot.Length = DriveRoot.MaximumLength = wcslen(root->string) * sizeof(WCHAR);
+    DriveRoot.Length = DriveRoot.MaximumLength = (USHORT)(wcslen(root->string) * sizeof(WCHAR));
     DriveRoot.Buffer = root->string;
 
     if (opts && opts->label && opts->label->string) {
-        Label.Length = Label.MaximumLength = wcslen(opts->label->string) * sizeof(WCHAR);
+        Label.Length = Label.MaximumLength = (USHORT)(wcslen(opts->label->string) * sizeof(WCHAR));
         Label.Buffer = opts->label->string;
     } else {
         Label.Length = Label.MaximumLength = 0;

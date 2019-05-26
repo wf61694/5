@@ -320,7 +320,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
             |LOCALE_NOUSEROVERRIDE, buf, 256);
     buf[len-1] = '_';
     len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
-            |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
+            |LOCALE_NOUSEROVERRIDE, &buf[len], (ULONG)(256-len));
     buf[len-1] = '.';
     sprintf(buf+len, "%u", cp);
     len += strlen(buf+len)+1;

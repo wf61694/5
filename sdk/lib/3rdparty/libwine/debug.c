@@ -367,7 +367,7 @@ static const char *default_dbgstr_an( const char *str, int n )
         sprintf( res, "#%04x", LOWORD(str) );
         return res;
     }
-    if (n == -1) n = strlen(str);
+    if (n == -1) n = (int)strlen(str);
     if (n < 0) n = 0;
     size = 10 + min( 300, n * 4 );
     dst = res = funcs.get_temp_buffer( size );
