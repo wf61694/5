@@ -1107,13 +1107,13 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 
     skip_dword_unknown(&ptr, 1);
 
-    read_dword(&ptr, &r->input_primitive);
+    read_dword(&ptr, (DWORD*)&r->input_primitive);
     TRACE("InputPrimitive: %x\n", r->input_primitive);
 
-    read_dword(&ptr, &r->gs_output_topology);
+    read_dword(&ptr, (DWORD*)&r->gs_output_topology);
     TRACE("GSOutputTopology: %x\n", r->gs_output_topology);
 
-    read_dword(&ptr, &r->gs_max_output_vertex_count);
+    read_dword(&ptr, (DWORD*)&r->gs_max_output_vertex_count);
     TRACE("GSMaxOutputVertexCount: %u\n", r->gs_max_output_vertex_count);
 
     skip_dword_unknown(&ptr, 3);
@@ -1123,16 +1123,16 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
 
     skip_dword_unknown(&ptr, 1);
 
-    read_dword(&ptr, &r->c_control_points);
+    read_dword(&ptr, (DWORD*)&r->c_control_points);
     TRACE("cControlPoints: %u\n", r->c_control_points);
 
-    read_dword(&ptr, &r->hs_output_primitive);
+    read_dword(&ptr, (DWORD*)&r->hs_output_primitive);
     TRACE("HSOutputPrimitive: %x\n", r->hs_output_primitive);
 
-    read_dword(&ptr, &r->hs_prtitioning);
+    read_dword(&ptr, (DWORD*)&r->hs_prtitioning);
     TRACE("HSPartitioning: %x\n", r->hs_prtitioning);
 
-    read_dword(&ptr, &r->tessellator_domain);
+    read_dword(&ptr, (DWORD*)&r->tessellator_domain);
     TRACE("TessellatorDomain: %x\n", r->tessellator_domain);
 
     skip_dword_unknown(&ptr, 3);
@@ -1438,25 +1438,25 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             desc->Name = string_data + (offset - string_data_offset);
             TRACE("Input bind Name: %s\n", debugstr_a(desc->Name));
 
-            read_dword(&ptr, &desc->Type);
+            read_dword(&ptr, (DWORD*)&desc->Type);
             TRACE("Input bind Type: %#x\n", desc->Type);
 
-            read_dword(&ptr, &desc->ReturnType);
+            read_dword(&ptr, (DWORD*)&desc->ReturnType);
             TRACE("Input bind ReturnType: %#x\n", desc->ReturnType);
 
-            read_dword(&ptr, &desc->Dimension);
+            read_dword(&ptr, (DWORD*)&desc->Dimension);
             TRACE("Input bind Dimension: %#x\n", desc->Dimension);
 
-            read_dword(&ptr, &desc->NumSamples);
+            read_dword(&ptr, (DWORD*)&desc->NumSamples);
             TRACE("Input bind NumSamples: %u\n", desc->NumSamples);
 
-            read_dword(&ptr, &desc->BindPoint);
+            read_dword(&ptr, (DWORD*)&desc->BindPoint);
             TRACE("Input bind BindPoint: %u\n", desc->BindPoint);
 
-            read_dword(&ptr, &desc->BindCount);
+            read_dword(&ptr, (DWORD*)&desc->BindCount);
             TRACE("Input bind BindCount: %u\n", desc->BindCount);
 
-            read_dword(&ptr, &desc->uFlags);
+            read_dword(&ptr, (DWORD*)&desc->uFlags);
             TRACE("Input bind uFlags: %u\n", desc->uFlags);
         }
     }
@@ -1501,13 +1501,13 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
                 goto err_out;
             }
 
-            read_dword(&ptr, &cb->size);
+            read_dword(&ptr, (DWORD*)&cb->size);
             TRACE("Cbuffer size: %u\n", cb->size);
 
-            read_dword(&ptr, &cb->flags);
+            read_dword(&ptr, (DWORD*)&cb->flags);
             TRACE("Cbuffer flags: %u\n", cb->flags);
 
-            read_dword(&ptr, &cb->type);
+            read_dword(&ptr, (DWORD*)&cb->type);
             TRACE("Cbuffer type: %#x\n", cb->type);
         }
     }
@@ -1603,8 +1603,8 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
         read_dword(&ptr, &name_offset);
         d[i].SemanticName = string_data + (name_offset - string_data_offset);
         read_dword(&ptr, &d[i].SemanticIndex);
-        read_dword(&ptr, &d[i].SystemValueType);
-        read_dword(&ptr, &d[i].ComponentType);
+        read_dword(&ptr, (DWORD*)&d[i].SystemValueType);
+        read_dword(&ptr, (DWORD*)&d[i].ComponentType);
         read_dword(&ptr, &d[i].Register);
         read_dword(&ptr, &mask);
         d[i].ReadWriteMask = (mask >> 8) & 0xff;
