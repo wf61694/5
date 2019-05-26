@@ -1765,7 +1765,7 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
     goto error;
 
   if (dwInterleave) {
-    LONG lCurFrame = -dwFileInitialFrames;
+    LONG lCurFrame = -(LONG)dwFileInitialFrames;
 
     /* interleaved file */
     if (dwInterleave == 1)

@@ -636,7 +636,7 @@ static void render_masked_bitmap(OLEPictureImpl *This, HDC hdc,
     SetWindowOrgEx(hdcBmp, 0, 0, NULL);
     SetWindowExtEx(hdcBmp, This->himetricWidth, This->himetricHeight, NULL);
     SetViewportOrgEx(hdcBmp, 0, This->origHeight, NULL);
-    SetViewportExtEx(hdcBmp, This->origWidth, -This->origHeight, NULL);
+    SetViewportExtEx(hdcBmp, This->origWidth, -(LONG)This->origHeight, NULL);
 
     if (hbmMask)
     {
@@ -1037,7 +1037,7 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
 
     bih.biSize = sizeof(bih);
     bih.biWidth = width;
-    bih.biHeight = -height;
+    bih.biHeight = -(INT)height;
     bih.biPlanes = 1;
     bih.biBitCount = 32;
     bih.biCompression = BI_RGB;
@@ -1108,7 +1108,7 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
             DIB_RGB_COLORS
         );
 
-        This->hbmMask = CreateBitmap(width,-height,1,1,NULL);
+        This->hbmMask = CreateBitmap(width,-(INT)height,1,1,NULL);
         hdcBmp = CreateCompatibleDC(NULL);
         hdcXor = CreateCompatibleDC(NULL);
         hdcMask = CreateCompatibleDC(NULL);

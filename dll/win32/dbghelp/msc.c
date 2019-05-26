@@ -679,7 +679,7 @@ static struct symt* codeview_add_type_array(struct codeview_type_parse* ctp,
     struct symt*        elem = codeview_fetch_type(ctp, elemtype, FALSE);
     struct symt*        index = codeview_fetch_type(ctp, indextype, FALSE);
 
-    return &symt_new_array(ctp->module, 0, -arr_len, elem, index)->symt;
+    return &symt_new_array(ctp->module, 0, -(int)arr_len, elem, index)->symt;
 }
 
 static BOOL codeview_add_type_enum_field_list(struct module* module,

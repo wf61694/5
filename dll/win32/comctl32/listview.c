@@ -9765,7 +9765,7 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
         break;
 
     case SB_PAGEUP:
-	nScrollDiff = -scrollInfo.nPage;
+	nScrollDiff = -(INT)scrollInfo.nPage;
         break;
 
     case SB_PAGEDOWN:
@@ -9870,7 +9870,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
         break;
 
     case SB_PAGELEFT:
-	nScrollDiff = -scrollInfo.nPage;
+	nScrollDiff = -(INT)scrollInfo.nPage;
         break;
 
     case SB_PAGERIGHT:

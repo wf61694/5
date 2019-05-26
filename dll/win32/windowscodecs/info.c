@@ -500,7 +500,7 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
         }
 
         if (This->patterns[i].EndOfStream)
-            seekpos.QuadPart = -This->patterns[i].Position.QuadPart;
+            seekpos.QuadPart = -(LONG64)This->patterns[i].Position.QuadPart;
         else
             seekpos.QuadPart = This->patterns[i].Position.QuadPart;
         hr = IStream_Seek(pIStream, seekpos, This->patterns[i].EndOfStream ? STREAM_SEEK_END : STREAM_SEEK_SET, NULL);
