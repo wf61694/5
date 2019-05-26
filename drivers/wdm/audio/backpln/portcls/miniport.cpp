@@ -14,6 +14,24 @@
 
 #include <debug.h>
 
+PVOID
+__cdecl
+operator new(
+    size_t Size,
+    POOL_TYPE PoolType,
+    ULONG Tag)
+{
+    return ExAllocatePoolWithTag(PoolType, Size, Tag);
+}
+
+void
+__cdecl
+operator delete(
+    PVOID ptr, UINT_PTR)
+{
+    ExFreePool(ptr);
+}
+
 NTSTATUS
 NTAPI
 PcNewMiniport(
