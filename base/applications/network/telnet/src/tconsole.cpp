@@ -262,7 +262,7 @@ void TConsole::Lightbg() {
 	// Paul Brannan 8/5/98
 	// Correction: processing more than one line at a time causes a segfault
 	// if the screen width != 80
-	for(int i = CON_TOP; i <= CON_BOTTOM; i++) {
+	for(SHORT i = CON_TOP; i <= CON_BOTTOM; i++) {
 		COORD Coord = {CON_LEFT, i};
 
 		ReadConsoleOutputAttribute(hConsole, pAttributes, (DWORD)(CON_COLS),
@@ -288,7 +288,7 @@ void TConsole::Darkbg() {
 	// Paul Brannan 8/5/98
 	// Correction: processing more than one line at a time causes a segfault
 	// if the screen width != 80
-	for(int i = CON_TOP; i <= CON_BOTTOM; i++) {
+	for(SHORT i = CON_TOP; i <= CON_BOTTOM; i++) {
 		COORD Coord = {CON_LEFT, i};
 
 		ReadConsoleOutputAttribute(hConsole, pAttributes, (DWORD)(CON_COLS),

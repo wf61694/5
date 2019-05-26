@@ -511,7 +511,7 @@ BOOL
 SaveSettings(VOID)
 {
     HKEY hKeyEventVwr;
-    DWORD dwSize;
+    SIZE_T dwSize;
     WCHAR buffer[100];
 
     /* Try to create/open the Event Viewer user key */
@@ -1195,7 +1195,7 @@ FormatByteSize(LONGLONG cbSize, LPWSTR pwszResult, UINT cchResultMax)
 LPWSTR
 FormatFileSizeWithBytes(const PULARGE_INTEGER lpQwSize, LPWSTR pwszResult, UINT cchResultMax)
 {
-    UINT cchWritten;
+    SIZE_T cchWritten;
     LPWSTR pwszEnd;
     size_t cchRemaining;
 
@@ -1294,7 +1294,7 @@ AllocEventLog(IN PCWSTR ComputerName OPTIONAL,
               IN BOOL Permanent)
 {
     PEVENTLOG EventLog;
-    UINT cchName;
+    SIZE_T cchName;
 
     /* Allocate a new event log entry */
     EventLog = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*EventLog));
@@ -1467,7 +1467,7 @@ GetExpandedFilePathName(
     OUT LPWSTR lpFullFileName OPTIONAL,
     IN DWORD nSize)
 {
-    DWORD dwLength;
+    SIZE_T dwLength;
 
     /* Determine the needed size after expansion of any environment strings */
     dwLength = ExpandEnvironmentStringsW(lpFileName, NULL, 0);

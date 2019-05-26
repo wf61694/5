@@ -308,7 +308,7 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
 
 static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 {
-  DWORD len = strlen(dst), slen = strlen(src);
+  SIZE_T len = strlen(dst), slen = strlen(src);
   LPSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(CHAR));
   if (!ndst)
   {
@@ -322,7 +322,7 @@ static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 
 static LPWSTR RPCRT4_strconcatW(LPWSTR dst, LPCWSTR src)
 {
-  DWORD len = strlenW(dst), slen = strlenW(src);
+  SIZE_T len = strlenW(dst), slen = strlenW(src);
   LPWSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(WCHAR));
   if (!ndst) 
   {

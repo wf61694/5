@@ -35,7 +35,7 @@ LdrpAllocateUnicodeString(IN OUT PUNICODE_STRING StringOut,
 {
     /* Sanity checks */
     ASSERT(StringOut);
-    ASSERT(Length <= UNICODE_STRING_MAX_BYTES);
+    ASSERT(Length <= UNICODE_STRING_MAX_BYTES - sizeof(UNICODE_NULL));
 
     /* Assume failure */
     StringOut->Length = 0;
@@ -67,7 +67,7 @@ LdrpAllocateUnicodeString(IN OUT PUNICODE_STRING StringOut,
     if (Length != UNICODE_STRING_MAX_BYTES)
     {
         /* It's not, so set the maximum length to be one char more */
-        StringOut->MaximumLength = Length + sizeof(UNICODE_NULL);
+        StringOut->MaximumLength = (USHORT)Length + sizeof(UNICODE_NULL);
     }
     else
     {

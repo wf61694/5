@@ -329,7 +329,7 @@ static unsigned int schannel_get_mac_key_size(int ciphersuite_id)
     return md_size;
 }
 
-static unsigned int schannel_get_kx_key_size(const mbedtls_ssl_context *ssl, const mbedtls_ssl_config *conf, int ciphersuite_id)
+static size_t schannel_get_kx_key_size(const mbedtls_ssl_context *ssl, const mbedtls_ssl_config *conf, int ciphersuite_id)
 {
     const mbedtls_ssl_ciphersuite_t *ssl_ciphersuite = mbedtls_ssl_ciphersuite_from_id(ciphersuite_id);
 

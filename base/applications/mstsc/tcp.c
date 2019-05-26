@@ -269,8 +269,8 @@ DWORD read_ssl_chunk(void *buf, SIZE_T buf_size, BOOL blocking, SIZE_T *ret_size
 void
 tcp_send(STREAM s)
 {
-	int length = s->end - s->data;
-	int sent, total = 0;
+	SIZE_T length = s->end - s->data;
+	SIZE_T sent, total = 0;
 
 	if (g_network_error == True)
 		return;

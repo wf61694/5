@@ -119,7 +119,7 @@ ArcGetNextTokenA(
 {
     NTSTATUS Status;
     PCSTR p = ArcPath;
-    ULONG SpecifierLength;
+    SIZE_T SpecifierLength;
     ULONG KeyValue;
 
     /*

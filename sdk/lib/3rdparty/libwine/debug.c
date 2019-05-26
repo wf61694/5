@@ -169,7 +169,7 @@ static void parse_options( const char *str )
         {
             for (i = 0; i < sizeof(debug_classes)/sizeof(debug_classes[0]); i++)
             {
-                int len = strlen(debug_classes[i]);
+                size_t len = strlen(debug_classes[i]);
                 if (len != (p - opt)) continue;
                 if (!memcmp( opt, debug_classes[i], len ))  /* found it */
                 {
