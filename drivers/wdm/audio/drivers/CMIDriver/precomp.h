@@ -6,4 +6,10 @@
 
 #include "debug.hpp"
 
+PVOID
+operator new (
+    size_t size,
+    POOL_TYPE pool_type,
+    ULONG tag);
+
 #endif /* _CMIDRIVER_PCH_ */
