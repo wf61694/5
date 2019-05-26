@@ -1865,7 +1865,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromScan0(INT width, INT height, INT stride,
         format == PixelFormat4bppIndexed ||
         format == PixelFormat8bppIndexed)
     {
-        (*bitmap)->image.palette = heap_alloc_zero(sizeof(UINT) * 2 + sizeof(ARGB) * (1 << PIXELFORMATBPP(format)));
+        (*bitmap)->image.palette = heap_alloc_zero(sizeof(UINT) * 2 + sizeof(ARGB) * ((size_t)1 << PIXELFORMATBPP(format)));
 
         if (!(*bitmap)->image.palette)
         {

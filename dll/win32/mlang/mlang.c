@@ -3567,7 +3567,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
             {
                 if (j >= *puiFonts) break;
 
-                pScriptFont[j].scripts = 1 << mlang_data[i].sid;
+                pScriptFont[j].scripts = (SCRIPT_IDS)1 << mlang_data[i].sid;
                 if (dwFlags == SCRIPTCONTF_FIXED_FONT)
                 {
                     MultiByteToWideChar(CP_ACP, 0, mlang_data[i].fixed_font, -1,
