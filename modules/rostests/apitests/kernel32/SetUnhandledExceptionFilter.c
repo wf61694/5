@@ -54,7 +54,13 @@ static LONG WINAPI ExceptionFilterSSESupport(LPEXCEPTION_POINTERS exp)
     
     ok((ctx->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL, "Context does not contain control register.\n");
     
+#ifdef _M_IX86
     ctx->Eip += 3;
+#elif defined(_M_AMD64)
+    ctx->Rip += 3;
+#else
+#error Architecture not handled
+#endif
 
     return EXCEPTION_CONTINUE_EXECUTION;
 }
@@ -80,7 +86,13 @@ static LONG WINAPI ExceptionFilterSSEException(LPEXCEPTION_POINTERS exp)
     
     ExceptionCaught = TRUE;
     
+#ifdef _M_IX86
     ctx->Eip += 3;
+#elif defined(_M_AMD64)
+    ctx->Rip += 3;
+#else
+#error Architecture not handled
+#endif
 
     return EXCEPTION_CONTINUE_EXECUTION;
 }
@@ -95,6 +107,7 @@ VOID TestSSEExceptions(VOID)
     /* Test SSE support for the CPU */
     p = SetUnhandledExceptionFilter(ExceptionFilterSSESupport);
     ok(p == NULL, "Previous filter should be NULL\n");
+#ifdef _M_IX86
 #ifdef _MSC_VER
     __asm
     {
@@ -114,6 +127,7 @@ VOID TestSSEExceptions(VOID)
         SetUnhandledExceptionFilter(NULL);
         return;
     }
+#endif // _M_IX86
     /* Deliberately throw a divide by 0 exception */
     p = SetUnhandledExceptionFilter(ExceptionFilterSSEException);
     ok(p == ExceptionFilterSSESupport, "Unexpected old filter : 0x%p", p);
@@ -123,6 +137,7 @@ VOID TestSSEExceptions(VOID)
     _mm_setcsr(csr & 0xFFFFFDFF);
 
     /* We can't use _mm_div_ps, as it masks the exception before performing anything*/
+#ifdef _M_IX86
 #if defined(_MSC_VER)
     __asm
     {
@@ -157,6 +172,10 @@ VOID TestSSEExceptions(VOID)
         :
     );
 #endif /* _MSC_VER */
+#else
+#pragma message("FIXME: unimplemented for this architecture")
+    supportsSSE = TRUE;
+#endif
 
     /* Restore mxcsr */
     _mm_setcsr(csr);

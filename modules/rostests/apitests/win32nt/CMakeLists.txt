@@ -72,7 +72,6 @@ add_executable(win32knt_apitest
 target_link_libraries(win32knt_apitest ${PSEH_LIB} gditools)
 set_module_type(win32knt_apitest win32cui)
 add_importlibs(win32knt_apitest
-    win32u # win32u_2ksp4 win32u_xpsp2 win32u_2k3sp2 win32u_vista
     gdi32
     user32
     shell32
@@ -80,7 +79,7 @@ add_importlibs(win32knt_apitest
     msvcrt
     kernel32
     ntdll)
-
+add_delay_importlibs(win32knt_apitest win32u)
 add_dependencies(win32knt_apitest xdk)
 add_pch(win32knt_apitest win32nt.h SOURCE)
 add_rostests_file(TARGET win32knt_apitest)

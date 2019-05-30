@@ -14,9 +14,9 @@ add_subdirectory(drivers)
 add_subdirectory(kmtests)
 #add_subdirectory(regtests)
 add_subdirectory(rosautotest)
-add_subdirectory(tests)
+#add_subdirectory(tests)
 add_subdirectory(win32)
-add_subdirectory(winetests)
+#add_subdirectory(winetests)
 
 
 ## Extra files needed for the various tests can be added into the "testdata" subdirectory.

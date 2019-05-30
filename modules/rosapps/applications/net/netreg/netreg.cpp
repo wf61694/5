@@ -182,10 +182,10 @@ private:
   }
 
   string present_value( DWORD type, const char *data, DWORD len ) {
-    switch( type ) {
-    default:
+//    switch( type ) {
+//    default:
       return bindump( data, len );
-    }
+//    }
   }
 
   void process_valid_request( HKEY open_reg_key, string key_name ) {
@@ -417,7 +417,7 @@ SOCKET make_listening_socket( int port ) {
 
   fprintf( stderr, "Creating the listener\n" );
   SOCKET l = socket( PF_INET, SOCK_STREAM, 0 );
-  fprintf( stderr, "Socket %x\n", l );
+  fprintf( stderr, "Socket %zx\n", l );
 
   if( l == INVALID_SOCKET ) return l;
   if( bind( l, (struct sockaddr *)&sa, sizeof( sa ) ) < 0 ) {
